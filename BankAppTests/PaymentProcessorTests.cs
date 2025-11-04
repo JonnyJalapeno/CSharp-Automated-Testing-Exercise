@@ -44,7 +44,8 @@ namespace BankAppTests
                         .Returns(PaymentResult.Ok());
 
             // Act + Assert
-            Assert.DoesNotThrow(() => _processor.ProcessPayment("User1", "Vendor123", 100));
+            var result = _processor.ProcessPayment("User1", "Vendor123", 100);
+            Assert.That(result.Success, Is.EqualTo(true));
 
             // Verify mocks were called correctly
             _vendorDbMock.Verify(v => v.EnsureVendorExists("Vendor123"), Times.Once);
@@ -53,18 +54,18 @@ namespace BankAppTests
         }
 
         [Test]
-        public void ProcessPayment_Throws_If_VendorService_Throws()
+        public void ProcessPayment_Fails_If_VendorService_Fails()
         {
             _vendorDbMock.Setup(v => v.EnsureVendorExists("Vendor123"))
              .Returns(PaymentResult.Fail("Vendor not found"));
 
             var result = _processor.ProcessPayment("User1", "Vendor123", 100);
             Assert.IsFalse(result.Success);
-            Assert.AreEqual("Vendor not found", result.ErrorMessage);
+            Assert.That(result.ErrorMessage, Is.EqualTo("Vendor not found"));
         }
 
         [Test]
-        public void ProcessPayment_Throws_If_SslService_Throws()
+        public void ProcessPayment_Fails_If_SslService_Fails()
         {
             _vendorDbMock.Setup(v => v.EnsureVendorExists("Vendor123"))
              .Returns(PaymentResult.Ok());
@@ -73,11 +74,11 @@ namespace BankAppTests
 
             var result = _processor.ProcessPayment("User1", "Vendor123", 100);
             Assert.IsFalse(result.Success);
-            Assert.AreEqual("SSL handshake failure", result.ErrorMessage);
+            Assert.That(result.ErrorMessage, Is.EqualTo("SSL handshake failure"));
         }
 
         [Test]
-        public void ProcessPayment_Throws_If_UserConsent_Throws()
+        public void ProcessPayment_Fails_If_UserConsent_Fails()
         {
             _vendorDbMock.Setup(v => v.EnsureVendorExists("Vendor123"))
             .Returns(PaymentResult.Ok());
@@ -88,7 +89,7 @@ namespace BankAppTests
 
             var result = _processor.ProcessPayment("User1", "Vendor123", 100);
             Assert.IsFalse(result.Success);
-            Assert.AreEqual("User empty or amount is wrong", result.ErrorMessage);
+            Assert.That(result.ErrorMessage, Is.EqualTo("User empty or amount is wrong"));
         }
     }
 }
